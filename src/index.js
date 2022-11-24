@@ -42,58 +42,53 @@
    uploadBytesResumable,
    getDownloadURL,
  } from 'firebase/storage';
- import { getMessaging, getToken, onMessage } from 'firebase/messaging';
+ import {
+   getMessaging,
+   getToken,
+   onMessage
+ } from 'firebase/messaging'; 
  import { getPerformance } from 'firebase/performance';
- // TODO: Enable Firebase Performance Monitoring.
- getPerformance();
- 
+
  import { getFirebaseConfig } from './firebase-config.js';
  
  // Signs-in Friendly Chat.
  async function signIn() {
-   // TODO 1: Sign in Firebase with credential from the Google user.
-     // Sign in Firebase using popup auth and Google as the identity provider.
-     var provider = new GoogleAuthProvider();
-     await signInWithPopup(getAuth(), provider);
+   // Sign in Firebase using popup auth and Google as the identity provider.
+   var provider = new GoogleAuthProvider();
+   await signInWithPopup(getAuth(), provider);
  }
  
  // Signs-out of Friendly Chat.
  function signOutUser() {
-   // TODO 2: Sign out of Firebase.
-    // Sign out of Firebase.
-    signOut(getAuth());
+   // Sign out of Firebase.
+   signOut(getAuth());
  }
  
- // Initiate firebase auth
+ // Initialize firebase auth
  function initFirebaseAuth() {
-   // TODO 3: Subscribe to the user's signed-in status
    // Listen to auth state changes.
    onAuthStateChanged(getAuth(), authStateObserver);
  }
  
  // Returns the signed-in user's profile Pic URL.
  function getProfilePicUrl() {
-   // TODO 4: Return the user's profile pic URL.
    return getAuth().currentUser.photoURL || '/images/profile_placeholder.png';
  }
  
  // Returns the signed-in user's display name.
  function getUserName() {
-   // TODO 5: Return the user's display name.
    return getAuth().currentUser.displayName;
  }
  
  // Returns true if a user is signed-in.
  function isUserSignedIn() {
-   // TODO 6: Return true if a user is signed-in.
    return !!getAuth().currentUser;
  }
  
- // Saves a new message on the Cloud Firestore.
+ // Saves a new message to Cloud Firestore.
  async function saveMessage(messageText) {
-   // TODO 7: Push a new message to Cloud Firestore. 
-    // Add a new message entry to the Firebase database.
-    try {
+   // Add a new message entry to the Firebase database.
+   try {
      await addDoc(collection(getFirestore(), 'messages'), {
        name: getUserName(),
        text: messageText,
@@ -108,7 +103,6 @@
  
  // Loads chat messages history and listens for upcoming ones.
  function loadMessages() {
-   // TODO 8: Load and listen for new messages.
    // Create the query to load the last 12 messages and listen for new ones.
    const recentMessagesQuery = query(collection(getFirestore(), 'messages'), orderBy('timestamp', 'desc'), limit(12));
    
@@ -129,7 +123,6 @@
  // Saves a new message containing an image in Firebase.
  // This first saves the image in Firebase storage.
  async function saveImageMessage(file) {
-   // TODO 9: Posts a new image as a message.
    try {
      // 1 - We add a message with a loading icon that will get updated with the shared image.
      const messageRef = await addDoc(collection(getFirestore(), 'messages'), {
@@ -147,7 +140,7 @@
      // 3 - Generate a public URL for the file.
      const publicImageUrl = await getDownloadURL(newImageRef);
  
-     // 4 - Update the chat message placeholder with the image's URL.
+     // 4 - Update the chat message placeholder with the image’s URL.
      await updateDoc(messageRef,{
        imageUrl: publicImageUrl,
        storageUri: fileSnapshot.metadata.fullPath
@@ -159,7 +152,6 @@
  
  // Saves the messaging device token to Cloud Firestore.
  async function saveMessagingDeviceToken() {
-   // TODO 10: Save the device token in Cloud Firestore
    try {
      const currentToken = await getToken(getMessaging());
      if (currentToken) {
@@ -167,7 +159,7 @@
        // Saving the Device Token to Cloud Firestore.
        const tokenRef = doc(getFirestore(), 'fcmTokens', currentToken);
        await setDoc(tokenRef, { uid: getAuth().currentUser.uid });
- 
+
        // This will fire when a message is received while the app is in the foreground.
        // When the app is in the background, firebase-messaging-sw.js will receive the message instead.
        onMessage(getMessaging(), (message) => {
@@ -187,16 +179,15 @@
  
  // Requests permissions to show notifications.
  async function requestNotificationsPermissions() {
-   // TODO 11: Request permissions to send notifications.
    console.log('Requesting notifications permission...');
    const permission = await Notification.requestPermission();
    
    if (permission === 'granted') {
-     console.log('si notifica.');
+     console.log('Notification permission granted.');
      // Notification permission granted.
      await saveMessagingDeviceToken();
    } else {
-     console.log('no notifica.');
+     console.log('Unable to get permission to notify.');
    }
  }
  
@@ -212,7 +203,7 @@
    if (!file.type.match('image.*')) {
      var data = {
        message: 'You can only share images',
-       timeout: 2000,
+       timeout: 2000
      };
      signInSnackbarElement.MaterialSnackbar.showSnackbar(data);
      return;
@@ -228,7 +219,7 @@
    e.preventDefault();
    // Check that the user entered a message and is signed in.
    if (messageInputElement.value && checkSignedInWithMessage()) {
-     saveMessage(messageInputElement.value).then(function () {
+     saveMessage(messageInputElement.value).then(function() {
        // Clear message text field and re-enable the SEND button.
        resetMaterialTextfield(messageInputElement);
        toggleButton();
@@ -238,15 +229,13 @@
  
  // Triggers when the auth state change for instance when the user signs-in or signs-out.
  function authStateObserver(user) {
-   if (user) {
-     // User is signed in!
+   if (user) { // User is signed in!
      // Get the signed-in user's profile pic and name.
      var profilePicUrl = getProfilePicUrl();
      var userName = getUserName();
  
      // Set the user's profile pic and name.
-     userPicElement.style.backgroundImage =
-       'url(' + addSizeToGoogleProfilePic(profilePicUrl) + ')';
+     userPicElement.style.backgroundImage = 'url(' + addSizeToGoogleProfilePic(profilePicUrl) + ')';
      userNameElement.textContent = userName;
  
      // Show user's profile and sign-out button.
@@ -259,8 +248,7 @@
  
      // We save the Firebase Messaging Device token and enable notifications.
      saveMessagingDeviceToken();
-   } else {
-     // User is signed out!
+   } else { // User is signed out!
      // Hide user's profile and sign-out button.
      userNameElement.setAttribute('hidden', 'true');
      userPicElement.setAttribute('hidden', 'true');
@@ -281,7 +269,7 @@
    // Display a message to the user using a Toast.
    var data = {
      message: 'You must sign-in first',
-     timeout: 2000,
+     timeout: 2000
    };
    signInSnackbarElement.MaterialSnackbar.showSnackbar(data);
    return false;
@@ -295,11 +283,11 @@
  
  // Template for messages.
  var MESSAGE_TEMPLATE =
-   '<div class="message-container">' +
-   '<div class="spacing"><div class="pic"></div></div>' +
-   '<div class="message"></div>' +
-   '<div class="name"></div>' +
-   '</div>';
+     '<div class="message-container">' +
+       '<div class="spacing"><div class="pic"></div></div>' +
+       '<div class="message"></div>' +
+       '<div class="name"></div>' +
+     '</div>';
  
  // Adds a size to Google Profile pics URLs.
  function addSizeToGoogleProfilePic(url) {
@@ -363,27 +351,23 @@
  
  // Displays a Message in the UI.
  function displayMessage(id, timestamp, name, text, picUrl, imageUrl) {
-   var div =
-     document.getElementById(id) || createAndInsertMessage(id, timestamp);
+   var div = document.getElementById(id) || createAndInsertMessage(id, timestamp);
  
    // profile picture
    if (picUrl) {
-     div.querySelector('.pic').style.backgroundImage =
-       'url(' + addSizeToGoogleProfilePic(picUrl) + ')';
+     div.querySelector('.pic').style.backgroundImage = 'url(' + addSizeToGoogleProfilePic(picUrl) + ')';
    }
  
    div.querySelector('.name').textContent = name;
    var messageElement = div.querySelector('.message');
  
-   if (text) {
-     // If the message is text.
+   if (text) { // If the message is text.
      messageElement.textContent = text;
      // Replace all line breaks by <br>.
      messageElement.innerHTML = messageElement.innerHTML.replace(/\n/g, '<br>');
-   } else if (imageUrl) {
-     // If the message is an image.
+   } else if (imageUrl) { // If the message is an image.
      var image = document.createElement('img');
-     image.addEventListener('load', function () {
+     image.addEventListener('load', function() {
        messageListElement.scrollTop = messageListElement.scrollHeight;
      });
      image.src = imageUrl + '&' + new Date().getTime();
@@ -391,9 +375,7 @@
      messageElement.appendChild(image);
    }
    // Show the card fading-in and scroll to view the new message.
-   setTimeout(function () {
-     div.classList.add('visible');
-   }, 1);
+   setTimeout(function() {div.classList.add('visible')}, 1);
    messageListElement.scrollTop = messageListElement.scrollHeight;
    messageInputElement.focus();
  }
@@ -432,20 +414,14 @@
  messageInputElement.addEventListener('change', toggleButton);
  
  // Events for image upload.
- imageButtonElement.addEventListener('click', function (e) {
+ imageButtonElement.addEventListener('click', function(e) {
    e.preventDefault();
    mediaCaptureElement.click();
  });
  mediaCaptureElement.addEventListener('change', onMediaFileSelected);
- 
- const firebaseAppConfig = getFirebaseConfig();
- // TODO 0: Initialize Firebase
- 
- initializeApp(firebaseAppConfig);
- 
- // TODO 12: Initialize Firebase Performance Monitoring
- getPerformance();
- 
- initFirebaseAuth();
- loadMessages();
+
+const firebaseApp = initializeApp(getFirebaseConfig());
+getPerformance();
+initFirebaseAuth();
+loadMessages();
  
